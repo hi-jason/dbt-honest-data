@@ -1,0 +1,102 @@
+version: 2
+models:
+  - name: dim_products
+    description: "Synthetic product lookup; exactly one row per product_id."
+    columns:
+      - name: product_id
+        data_tests:
+          - not_null
+          - unique
+      - name: status
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['active', 'inactive']
+
+  - name: stg_orders
+    description: "Synthetic order source; exactly one row per order_id."
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+          - unique
+      - name: product_id
+        data_tests:
+          # Warn, not fail: orders with an unknown product are kept
+          # downstream (see fct_order_revenue).
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+              config:
+                severity: warn
+
+  - name: fct_order_revenue
+    description: "Grain: one row per order_id. Missing discounts mean zero."
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "gross_amount - discount_amount = net_amount"
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+          - unique
+      - name: product_id
+        data_tests:
+          # Policy: an order whose product is missing from dim_products is
+          # KEPT with a null product_status (see the unit test below), so
+          # an orphan is a warning to investigate, not a build failure.
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+              config:
+                severity: warn
+
+  - name: fct_monthly_revenue
+    description: "Grain: one row per (month_start, product_id)."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [month_start, product_id]
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "gross_amount - discount_amount = net_amount"
+    columns:
+      - name: month_start
+        data_tests:
+          - not_null
+      - name: product_id
+        data_tests:
+          - not_null
+
+unit_tests:
+  - name: revenue_join_and_null_discount
+    model: fct_order_revenue
+    given:
+      - input: ref('stg_orders')
+        rows:
+          - {order_id: 11, product_id: 1, gross_amount: 20, discount_amount: 5}
+          - {order_id: 12, product_id: 999, gross_amount: 10, discount_amount: null}
+      - input: ref('dim_products')
+        rows:
+          - {product_id: 1, status: active}
+    expect:
+      rows:
+        - {order_id: 11, product_id: 1, product_status: active, gross_amount: 20, discount_amount: 5, net_amount: '15.00'}
+        - {order_id: 12, product_id: 999, product_status: null, gross_amount: 10, discount_amount: 0, net_amount: '10.00'}
+
+  - name: revenue_zero_discount
+    model: fct_order_revenue
+    given:
+      - input: ref('stg_orders')
+        rows:
+          - {order_id: 21, product_id: 2, gross_amount: 7, discount_amount: 0}
+      - input: ref('dim_products')
+        rows:
+          - {product_id: 2, status: inactive}
+    expect:
+      rows:
+        - {order_id: 21, product_id: 2, product_status: inactive, gross_amount: 7, discount_amount: 0, net_amount: '7.00'}

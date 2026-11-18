@@ -1,0 +1,49 @@
+version: 2
+models:
+  - name: bad_duplicate_order
+    columns:
+      - name: order_id
+        data_tests:
+          - unique:
+              config:
+                tags: ['ae_starter_negative']
+  - name: bad_orphan_order
+    columns:
+      - name: product_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+              config:
+                tags: ['ae_starter_negative']
+  - name: bad_wrong_amount
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "gross_amount - discount_amount = net_amount"
+          config:
+            tags: ['ae_starter_negative']
+  - name: bad_invalid_status
+    columns:
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['active', 'inactive']
+              config:
+                tags: ['ae_starter_negative']
+  - name: bad_null_key
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null:
+              config:
+                tags: ['ae_starter_negative']
+  - name: bad_duplicate_composite
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [month_start, product_id]
+          config:
+            tags: ['ae_starter_negative']

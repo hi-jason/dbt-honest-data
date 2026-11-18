@@ -1,0 +1,68 @@
+# Synthetic-only stateful testing. Uses invented data and disposable databases only.
+name: Advanced synthetic examples
+on:
+  pull_request:
+    paths:
+      - "ae_advanced/**"
+      - ".github/workflows/advanced-examples.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  duckdb:
+    name: Advanced synthetic DuckDB
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: "3.11"
+      - name: Install pinned dbt DuckDB
+        run: python -m pip install "dbt-core==1.12.6" "dbt-duckdb==1.11.1"
+      - name: Verify stateful synthetic examples
+        env:
+          AE_ADVANCED_ADAPTER: duckdb
+        run: bash ae_advanced/run.sh
+
+  postgres:
+    name: Advanced synthetic PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: synthetic_only
+          POSTGRES_PASSWORD: synthetic_only
+          POSTGRES_DB: ae_quality_synthetic
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U synthetic_only -d ae_quality_synthetic"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: "3.11"
+      - name: Install pinned dbt PostgreSQL
+        run: python -m pip install "dbt-core==1.12.6" "dbt-postgres==1.11.0"
+      - name: Verify stateful synthetic examples
+        env:
+          AE_ADVANCED_ADAPTER: postgres
+          PGHOST: localhost
+          PGUSER: synthetic_only
+          PGPASSWORD: synthetic_only
+          PGDATABASE: ae_quality_synthetic
+        run: bash ae_advanced/run.sh

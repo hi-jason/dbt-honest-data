@@ -1,0 +1,16 @@
+ae_quality_advanced:
+  target: "{{ env_var('AE_ADVANCED_ADAPTER', 'duckdb') }}"
+  outputs:
+    duckdb:
+      type: duckdb
+      path: "./target/advanced_synthetic.duckdb"
+      threads: 2
+    postgres:
+      type: postgres
+      host: "{{ env_var('PGHOST', 'localhost') }}"
+      user: "{{ env_var('PGUSER', 'synthetic_only') }}"
+      password: "{{ env_var('PGPASSWORD', 'synthetic_only') }}"
+      port: 5432
+      dbname: "{{ env_var('PGDATABASE', 'ae_quality_synthetic') }}"
+      schema: ae_advanced_synthetic
+      threads: 2

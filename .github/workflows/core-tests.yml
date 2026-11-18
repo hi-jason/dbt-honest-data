@@ -1,0 +1,69 @@
+name: Core dbt contracts
+on:
+  pull_request:
+    paths:
+      - "macros/**"
+      - "integration_tests/**"
+      - "dbt_project.yml"
+      - "packages.yml"
+      - ".github/workflows/core-tests.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-tests-duckdb:
+    name: Core contracts DuckDB
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: "3.11"
+      - name: Install pinned dbt and DuckDB adapter
+        run: python -m pip install --disable-pip-version-check "dbt-core==1.12.6" "dbt-duckdb==1.11.1"
+      - name: Synthetic DuckDB tests
+        run: bash integration_tests/run.sh
+
+  package-tests-postgres:
+    name: Core contracts PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: synthetic_tester
+          POSTGRES_PASSWORD: synthetic_ci_only
+          POSTGRES_DB: synthetic_fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U synthetic_tester -d synthetic_fixture"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      HONEST_DATA_TARGET: postgres
+      HONEST_DATA_PG_PASSWORD: synthetic_ci_only
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: "3.11"
+      - name: Install pinned dbt and PostgreSQL adapter
+        run: python -m pip install --disable-pip-version-check "dbt-core==1.12.6" "dbt-postgres==1.11.0"
+      - name: Synthetic PostgreSQL tests
+        run: bash integration_tests/run.sh

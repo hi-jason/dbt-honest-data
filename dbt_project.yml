@@ -1,0 +1,7 @@
+name: honest_data
+version: "1.1.7"
+config-version: 2
+
+macro-paths: ["macros"]
+
+require-dbt-version: [">=1.10.0", "<2.0.0"]  # `arguments:` under data_tests needs 1.10+

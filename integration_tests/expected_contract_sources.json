@@ -1,0 +1,14 @@
+{
+  "description": "Reviewed Git blob IDs for synthetic contract declarations; update only with reviewed fixture changes.",
+  "sources": {
+    "models/honest/schema.yml": "9a05434a8c9dacaa0fdcdbacccb222f0de320633",
+    "models/dishonest/schema.yml": "695be2e85657863aa3ae27d6493de54f0785d3fb",
+    "tests/honest/schema_name_denylist_existing_schema.sql": "7072b8d1b0a1e61f8d63587295467f84adc849b8",
+    "tests/honest/schema_name_denylist_two_existing.sql": "00da63c75b13f8905001bca94839122268330563",
+    "tests/dishonest/schema_name_denylist_absent_schema.sql": "05b756ab99d6cf16b74c2d1bc199efe08173dd6b",
+    "tests/dishonest/schema_name_denylist_absent_table.sql": "bad8c8d438e8b27202db289be8086fec4dc0c483",
+    "tests/dishonest/schema_name_denylist_partial_missing.sql": "bceadbe08d84db45deea6b9e3739d130c9399dad",
+    "tests/dishonest/schema_name_denylist_required_missing.sql": "2297e10f4582dc398f522955c16917efa393e398",
+    "tests/dishonest/schema_name_denylist_forbidden_column.sql": "9cc23a6f01e94c2e0fbc5538f0a8600e06b63308"
+  }
+}

@@ -1,0 +1,16 @@
+name: honest_data_integration_tests
+version: "1.1.7"
+config-version: 2
+
+profile: honest_data_integration_tests
+model-paths: ["models"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  honest_data_integration_tests:
+    +materialized: table
+
+vars:
+  # The two positions of a feature switch, for kill_switch_holds.
+  partner_feed_enabled_on: true
+  partner_feed_enabled_off: false

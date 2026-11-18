@@ -1,0 +1,348 @@
+version: 2
+
+# Every model here is deliberately wrong, and every test attached to one
+# is expected to FAIL. run.sh asserts exactly that: a package whose
+# negative cases were never exercised has only been shown to stay quiet,
+# which is not the same as being shown to work.
+#
+# One test per model, so a failure names the defect unambiguously.
+
+models:
+
+  - name: jobs_unlabelled_dates
+    columns:
+      - name: posted_at
+        data_tests:
+          - honest_data.provenance_is_paired:
+              arguments:
+                provenance_column: posted_at_precision
+                key_column: job_key
+
+  - name: jobs_unattributed_absence
+    columns:
+      - name: pay_min
+        data_tests:
+          - honest_data.provenance_is_paired:
+              arguments:
+                provenance_column: pay_absent_reason
+                label_when: value_absent
+                key_column: job_key
+
+  - name: jobs_false_coverage_claim
+    columns:
+      - name: pay_absent_reason
+        data_tests:
+          - honest_data.coverage_claim_holds:
+              arguments:
+                claim_value: no_parser_for_source
+                scope_column: source
+                value_column: pay_min
+
+  - name: changes_claim_without_evidence
+    data_tests:
+      # Row 1 trips this one: claimed material, names no dimension.
+      - honest_data.claim_requires_evidence:
+          arguments:
+            claim: "change_class = 'material'"
+            evidence: "changed_dimensions is not null and changed_dimensions <> ''"
+            key_column: job_key
+      # Row 2 trips this one, in the opposite direction: a real pay
+      # payload that no dimension claims. Both directions are exercised
+      # because both are real defects.
+      - honest_data.claim_requires_evidence:
+          arguments:
+            claim: "changed_dimensions like '%pay%'"
+            evidence: "pay_before is not null"
+            key_column: job_key
+
+  - name: changes_point_in_time
+    columns:
+      - name: changed_after
+        data_tests:
+          - honest_data.bounds_are_a_window:
+              arguments:
+                upper_column: changed_before
+                key_column: job_key
+
+  - name: public_leaky
+    data_tests:
+      - honest_data.no_column_names_matching:
+          arguments:
+            patterns: ["%internal_note%", "%internal_score%"]
+
+  - name: jobs_rate_below_band
+    columns:
+      - name: posted_at
+        data_tests:
+          - honest_data.declared_rate_band:
+              arguments:
+                epistemic_status: measured
+                min_rate: 0.9
+
+
+  - name: latest_drops_and_invents
+    data_tests:
+      # d missing, z invented, a twice: three failure rows.
+      - honest_data.every_row_accounted_for:
+          arguments:
+            against: ref('source_badly_split')
+            key: listing_id
+
+  - name: source_badly_split
+    data_tests:
+      # a is in no part; c is in both.
+      - honest_data.partitions_into:
+          arguments:
+            parts: [ref('accepted_forgets_to_filter'), ref('held_overlapping')]
+            key: listing_id
+
+  - name: accepted_forgets_to_filter
+  - name: held_overlapping
+
+  - name: lifecycle_out_of_order
+    data_tests:
+      - honest_data.stages_are_monotonic:
+          arguments:
+            stages: [listed_at, first_edited_at, closed_at]
+            key_column: listing_id
+
+  - name: export_from_the_future
+    columns:
+      - name: export_date
+        data_tests:
+          - honest_data.not_in_the_future:
+              arguments:
+                key_column: export_id
+
+  - name: titles_misclassified
+    data_tests:
+      # One case has the wrong value; one case is missing from the model,
+      # which must fail rather than pass unchecked.
+      - honest_data.known_cases:
+          arguments:
+            key_column: title
+            value_column: role_family
+            cases:
+              - {key: "Data Analyst", expect: "analyst"}
+              - {key: "Head of Data", expect: "leadership"}
+
+  - name: public_values_leaky
+    data_tests:
+      - honest_data.no_values_matching:
+          arguments:
+            patterns: ["%canary-%", "%utm_source=%"]
+
+  - name: partner_rows_despite_switch_off
+    data_tests:
+      - honest_data.kill_switch_holds:
+          arguments:
+            switch_on: "{{ var('partner_feed_enabled_off') }}"
+            row_filter: "source = 'partner'"
+            key_column: listing_id
+
+  - name: holds_out_of_band
+    data_tests:
+      - honest_data.grouped_share_in_band:
+          arguments:
+            condition: "is_held"
+            group_by: source
+            min_share: 0.1
+            max_share: 0.5
+            min_group_rows: 3
+
+  - name: dates_none_gradable
+    data_tests:
+      - honest_data.still_grading:
+          arguments:
+            row_filter: "posted_at is not null"
+
+  - name: listings_shadowed
+    data_tests:
+      - honest_data.one_row_per_identity:
+          arguments:
+            identity: "split_part(listing_key, ':', 3)"
+            key_column: listing_key
+
+  # Adversarial regression: a source-side null key must not be a false negative.
+  - name: derived_missing_null
+    data_tests:
+      - honest_data.every_row_accounted_for:
+          arguments:
+            against: ref('source_null_keys')
+            key: listing_id
+
+  # Adversarial regressions for input/part multiplicities.
+  - name: input_duplicate_keys
+    data_tests:
+      - honest_data.partitions_into:
+          arguments:
+            parts: [ref('input_duplicate_accepted')]
+            key: listing_id
+
+  - name: part_duplicate_source
+    data_tests:
+      - honest_data.partitions_into:
+          arguments:
+            parts: [ref('part_duplicate_accepted')]
+            key: listing_id
+
+  - name: part_null_source
+    data_tests:
+      - honest_data.partitions_into:
+          arguments:
+            parts: [ref('part_null_accepted')]
+            key: listing_id
+
+  # With row_filter, an unfiltered output is not an exact partition.
+  - name: scoped_source_bad
+    data_tests:
+      - honest_data.partitions_into:
+          arguments:
+            parts: [ref('scoped_part_extra')]
+            key: listing_id
+            row_filter: "source = 'included'"
+
+  # Auto-discovery skips non-string columns. Explicit JSON serialization catches it.
+  - name: public_values_structured_leaky
+    data_tests:
+      - honest_data.no_values_matching:
+          arguments:
+            patterns: ["%CANARY-%"]
+            rule_ids: ["synthetic_json_canary"]
+            columns: ["cast(payload as varchar)"]
+
+  # Adversarial evidence that agreement alone is not uniqueness.
+  - name: cases_duplicate_actual
+    data_tests:
+      - honest_data.known_cases:
+          arguments:
+            key_column: title
+            value_column: role_family
+            cases:
+              - {key: "Data Analyst", expect: "analyst"}
+
+  - name: cases_wrong_number
+    data_tests:
+      - honest_data.known_cases:
+          arguments:
+            key_column: title
+            value_column: hourly_rate
+            cases:
+              - {key: "Data Analyst", expect: 16}
+
+  - name: cases_duplicate_pin
+    data_tests:
+      - honest_data.known_cases:
+          arguments:
+            key_column: title
+            value_column: role_family
+            cases:
+              - {key: "Data Analyst", expect: "analyst"}
+              - {key: "Data Analyst", expect: "analyst"}
+
+  - name: identity_null
+    data_tests:
+      - honest_data.one_row_per_identity:
+          arguments:
+            identity: external_id
+            key_column: listing_key
+
+  - name: identity_blank
+    data_tests:
+      - honest_data.one_row_per_identity:
+          arguments:
+            identity: external_id
+            key_column: listing_key
+
+  - name: groups_all_too_small
+    data_tests:
+      - honest_data.grouped_share_in_band:
+          arguments:
+            condition: is_held
+            group_by: source
+            min_share: 0.0
+            max_share: 1.0
+            min_group_rows: 10
+            fail_when_nothing_graded: true
+
+  - name: graded_population_empty
+    data_tests:
+      - honest_data.still_grading:
+          arguments:
+            row_filter: "posted_at is not null"
+            only_when_model_has_rows: false
+
+  # SQL NULL is not the only missing provenance representation.
+  - name: precision_blank_label
+    columns:
+      - name: posted_at
+        data_tests:
+          - honest_data.provenance_is_paired:
+              arguments:
+                provenance_column: posted_at_precision
+                key_column: job_key
+
+  - name: absence_blank_reason
+    columns:
+      - name: pay_min
+        data_tests:
+          - honest_data.provenance_is_paired:
+              arguments:
+                provenance_column: pay_absent_reason
+                label_when: value_absent
+                key_column: job_key
+
+  # Without a scope, a source-wide claim is not meaningful.
+  - name: coverage_claim_null_scope
+    columns:
+      - name: pay_absent_reason
+        data_tests:
+          - honest_data.coverage_claim_holds:
+              arguments:
+                claim_value: no_parser_for_source
+                scope_column: source
+                value_column: pay_min
+
+  # A quoted FALSE was truthy in Jinja, disabling integrity guards.
+  - name: duplicates_disabled_quoted_false
+    data_tests:
+      - honest_data.every_row_accounted_for:
+          arguments:
+            against: ref('source_for_duplicate_flag')
+            key: record_id
+            allow_duplicates: "false"
+
+  - name: extras_disabled_quoted_false
+    data_tests:
+      - honest_data.every_row_accounted_for:
+          arguments:
+            against: ref('source_for_extra_flag')
+            key: record_id
+            allow_extra: "false"
+
+  - name: equal_window_quoted_false
+    columns:
+      - name: lower_bound
+        data_tests:
+          - honest_data.bounds_are_a_window:
+              arguments:
+                upper_column: upper_bound
+                allow_equal: "false"
+                key_column: record_id
+
+  - name: empty_grading_quoted_false
+    data_tests:
+      - honest_data.still_grading:
+          arguments:
+            row_filter: "observed_at is not null"
+            only_when_model_has_rows: "false"
+
+  # Exactly one in-scope future timestamp is invalid even with an OR filter.
+  - name: filter_or_future_in_scope
+    columns:
+      - name: observed_on
+        data_tests:
+          - honest_data.not_in_the_future:
+              arguments:
+                key_column: record_id
+                row_filter: "scope = 'primary' or scope = 'secondary'"

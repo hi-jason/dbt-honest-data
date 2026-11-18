@@ -1,0 +1,4 @@
+# Deliberately opt-in; does NOT alter the standalone honest-data package.
+packages:
+  - package: dbt-labs/dbt_utils
+    version: 1.4.1

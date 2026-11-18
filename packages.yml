@@ -1,0 +1,4 @@
+# This core package deliberately has no third-party dbt package dependencies.
+# The generic tests and helper macros live here; optional packages belong
+# in the consuming project when a specific test requires them.
+packages: []

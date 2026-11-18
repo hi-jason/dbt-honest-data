@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="390" viewBox="0 0 1120 390" role="img" aria-labelledby="title desc">
+<title id="title">Synthetic CI verification summary: 38 of 38 expected passes, 44 of 44 planted-error checks caught</title>
+<desc id="desc">From verified GitHub Actions core integration results on DuckDB and PostgreSQL. Thirty-eight healthy tests returned PASS, forty-four deliberately invalid tests returned the required assertion FAIL, five selected cases had exact failure reasons checked, and the CI workflow completed successfully.</desc>
+<rect x="0" y="0" width="1120" height="390" rx="20" fill="#101827"/>
+<rect x="0" y="0" width="1120" height="63" rx="20" fill="#1f2937"/>
+<rect x="0" y="44" width="1120" height="19" fill="#1f2937"/>
+<circle cx="29" cy="31" r="7" fill="#5eead4"/>
+<text x="48" y="38" font-size="24" font-family="ui-sans-serif, Arial, sans-serif" font-weight="700" fill="#f9fafb">Synthetic data-quality tests</text>
+<rect x="877" y="17" rx="13" width="219" height="31" fill="#14532d"/>
+<text x="987" y="39" text-anchor="middle" font-size="15" font-weight="700" font-family="ui-sans-serif, Arial, sans-serif" fill="#dcfce7">CI WORKFLOW PASSED</text>
+<text x="28" y="92" font-size="18" font-family="ui-sans-serif, Arial, sans-serif" fill="#cbd5e1">All expected outcomes verified on DuckDB and PostgreSQL</text>
+<rect x="24" y="113" width="523" height="147" rx="13" fill="#20332f" stroke="#377d62" stroke-width="2"/>
+<text x="46" y="174" font-size="66" font-weight="700" font-family="ui-sans-serif, Arial, sans-serif" fill="#86efac">38/38</text>
+<text x="46" y="211" font-size="21" font-family="ui-sans-serif, Arial, sans-serif" font-weight="700" fill="#f8fafc">Expected passes</text>
+<text x="46" y="238" font-size="16" font-family="ui-sans-serif, Arial, sans-serif" fill="#cbd5e1">Clean data correctly accepted</text>
+<rect x="573" y="113" width="523" height="147" rx="13" fill="#20332f" stroke="#377d62" stroke-width="2"/>
+<text x="595" y="174" font-size="66" font-weight="700" font-family="ui-sans-serif, Arial, sans-serif" fill="#86efac">44/44</text>
+<text x="595" y="211" font-size="21" font-family="ui-sans-serif, Arial, sans-serif" font-weight="700" fill="#f8fafc">Planted-error checks caught</text>
+<text x="595" y="238" font-size="16" font-family="ui-sans-serif, Arial, sans-serif" fill="#cbd5e1">Corrupt fixtures correctly returned FAIL</text>
+<rect x="24" y="277" width="1072" height="64" rx="10" fill="#192c40"/>
+<text x="47" y="309" font-size="28" font-weight="700" font-family="ui-sans-serif, Arial, sans-serif" fill="#93c5fd">5/5</text>
+<text x="126" y="309" font-size="17" font-family="ui-sans-serif, Arial, sans-serif" fill="#f8fafc">Targeted failing cases verified by exact reason and row count</text>
+<text x="28" y="367" font-size="14" font-family="ui-sans-serif, Arial, sans-serif" fill="#94a3b8">Verified CI results (synthetic fixtures) · Summary graphic, not a terminal screenshot · Full logs linked in README</text>
+</svg>

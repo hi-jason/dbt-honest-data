@@ -1,0 +1,16 @@
+ae_quality_starter:
+  target: "{{ env_var('AE_STARTER_ADAPTER', 'duckdb') }}"
+  outputs:
+    duckdb:
+      type: duckdb
+      path: "./target/ae_starter.duckdb"
+      threads: 2
+    postgres:
+      type: postgres
+      host: "{{ env_var('PGHOST', 'localhost') }}"
+      port: 5432
+      user: "{{ env_var('PGUSER', 'synthetic_only') }}"
+      password: "{{ env_var('PGPASSWORD', 'synthetic_only') }}"
+      dbname: "{{ env_var('PGDATABASE', 'ae_quality_synthetic') }}"
+      schema: ae_quality_synthetic
+      threads: 2

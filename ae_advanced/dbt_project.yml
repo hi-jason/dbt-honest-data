@@ -1,0 +1,14 @@
+name: ae_quality_advanced
+version: "0.1.0"
+config-version: 2
+
+profile: ae_quality_advanced
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  ae_quality_advanced:
+    +materialized: view

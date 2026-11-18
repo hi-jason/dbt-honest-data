@@ -1,0 +1,20 @@
+# Synthetic-only integration profiles. No production credentials.
+# Relative DuckDB path avoids machine-specific home paths.
+# PostgreSQL host points at an ephemeral CI service, not a real database.
+honest_data_integration_tests:
+  target: "{{ env_var('HONEST_DATA_TARGET', 'dev') }}"
+  outputs:
+    dev:
+      type: duckdb
+      path: "target/honest_data_integration.duckdb"
+      schema: main
+      threads: 1
+    postgres:
+      type: postgres
+      host: 127.0.0.1
+      user: synthetic_tester
+      password: "{{ env_var('HONEST_DATA_PG_PASSWORD', 'synthetic_ci_only') }}"
+      dbname: synthetic_fixture
+      schema: public
+      port: 5432
+      threads: 1
